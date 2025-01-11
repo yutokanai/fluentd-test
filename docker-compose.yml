@@ -1,0 +1,35 @@
+version: "3"
+services:
+  web:
+    image: httpd
+    container_name: httpd
+    ports:
+      - "80:80"
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: localhost:24224
+        tag: httpd.access
+        fluentd-async: "true"
+
+  aggregator:
+    build: ./aggregator
+    container_name: log-aggregator
+    volumes:
+      - ./aggregator/conf:/fluentd/etc
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+
+  executor:
+    build: ./executor
+    container_name: fluentd-executor
+    volumes:
+      - ./executor/conf:/fluentd/etc
+
+networks:
+  efk_stack_network: 
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.10.10.0/24
